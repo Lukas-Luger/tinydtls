@@ -54,11 +54,14 @@ typedef enum {
  * invalid and must be initialized again with dtls_hmac_init() before
  * the structure can be used again. 
  */
+#ifdef USE_PSA
+typedef psa_mac_operation_t dtls_hmac_context_t;
+#else
 typedef struct {
   unsigned char pad[DTLS_HMAC_BLOCKSIZE]; /**< ipad and opad storage */
   dtls_hash_ctx data;		          /**< context for hash function */
 } dtls_hmac_context_t;
-
+#endif
 /**
  * Initializes an existing HMAC context. 
  *
