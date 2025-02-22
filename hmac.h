@@ -55,6 +55,7 @@ typedef enum {
  * the structure can be used again. 
  */
 #ifdef USE_PSA
+#include "psa/crypto.h"
 typedef psa_mac_operation_t dtls_hmac_context_t;
 #else
 typedef struct {

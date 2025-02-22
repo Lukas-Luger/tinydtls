@@ -24,7 +24,7 @@
 void
 dtls_hmac_init(dtls_hmac_context_t *ctx, const unsigned char *key, size_t klen) {
   *ctx = psa_mac_operation_init();
-  
+
   psa_key_attributes_t attr = psa_key_attributes_init();
   psa_key_id_t key_id = 0;
 
@@ -38,7 +38,7 @@ dtls_hmac_init(dtls_hmac_context_t *ctx, const unsigned char *key, size_t klen) 
   psa_key_type_t type = PSA_KEY_TYPE_HMAC;
   psa_set_key_type(&attr, type);
 
-  uint8_t size = klen > CONFIG_PSA_MAX_KEY_SIZE ? CONFIG_PSA_MAX_KEY_SIZE  : klen;
+  uint8_t size = klen > PSA_HASH_LENGTH(algo) ? PSA_HASH_LENGTH(algo)  : klen;
   psa_set_key_bits(&attr, size * 8);
 
   psa_import_key(&attr, key, klen, &key_id);
