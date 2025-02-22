@@ -24,7 +24,7 @@
 void
 dtls_hmac_init(dtls_hmac_context_t *ctx, const unsigned char *key, size_t klen) {
   *ctx = psa_mac_operation_init();
-
+  
   psa_key_attributes_t attr = psa_key_attributes_init();
   psa_key_id_t key_id = 0;
 
@@ -41,13 +41,13 @@ dtls_hmac_init(dtls_hmac_context_t *ctx, const unsigned char *key, size_t klen) 
   uint8_t size = klen > CONFIG_PSA_MAX_KEY_SIZE ? CONFIG_PSA_MAX_KEY_SIZE  : klen;
   psa_set_key_bits(&attr, size * 8);
 
-  psa_status_t ret = psa_import_key(&attr, key, klen, &key_id);
+  psa_import_key(&attr, key, klen, &key_id);
 
   if(key_id == PSA_KEY_ID_NULL){
       return;
   }
   
-  ret = psa_mac_sign_setup(ctx, key_id, algo);
+  psa_mac_sign_setup(ctx, key_id, algo);
 
   psa_destroy_key(key_id);
 }
@@ -57,14 +57,14 @@ dtls_hmac_update(dtls_hmac_context_t *ctx,
     const unsigned char *input, size_t ilen) {
   assert(ctx);
   
-  psa_status_t ret = psa_mac_update(ctx, input, ilen);
+  psa_mac_update(ctx, input, ilen);
 }
 
 int
 dtls_hmac_finalize(dtls_hmac_context_t *ctx, unsigned char *result) {
   size_t actual_size;
 
-  psa_status_t ret = psa_mac_sign_finish(ctx, result, PSA_MAC_MAX_SIZE, &actual_size);
+  psa_mac_sign_finish(ctx, result, PSA_MAC_MAX_SIZE, &actual_size);
 
   return actual_size;
 }
