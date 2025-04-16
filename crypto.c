@@ -58,7 +58,7 @@ memarray_t security_storage;
 
 #define HMAC_UPDATE_SEED(Context,Seed,Length)		\
   if (Seed) dtls_hmac_update(Context, (Seed), (Length))
-
+#ifndef USE_PSA
 static struct dtls_cipher_context_t cipher_context;
 static dtls_mutex_t cipher_context_mutex = DTLS_MUTEX_INITIALIZER;
 
@@ -72,7 +72,7 @@ static void dtls_cipher_context_release(void)
 {
   dtls_mutex_unlock(&cipher_context_mutex);
 }
-
+#endif
 #if !(defined (WITH_CONTIKI)) && !(defined (RIOT_VERSION))
 void crypto_init(void)
 {
@@ -291,7 +291,7 @@ dtls_mac(dtls_hmac_context_t *hmac_ctx,
   
   dtls_hmac_finalize(hmac_ctx, buf);
 }
-
+#ifndef USE_PSA
 static size_t
 dtls_ccm_encrypt(aes128_ccm_t *ccm_ctx, const unsigned char *src, size_t srclen,
 		 unsigned char *buf, 
@@ -329,7 +329,7 @@ dtls_ccm_decrypt(aes128_ccm_t *ccm_ctx, const unsigned char *src,
 				 aad, la);
   return len;
 }
-
+#endif
 #ifdef DTLS_PSK
 int
 dtls_psk_pre_master_secret(unsigned char *key, size_t keylen,
@@ -458,7 +458,6 @@ int dtls_ecdh_pre_master_secret(unsigned char *priv_key,
   dtls_ec_key_from_uint32(result_x, key_size, result);
   return key_size;
 }
-
 void
 dtls_ecdsa_generate_key(unsigned char *priv_key,
 			unsigned char *pub_key_x,
@@ -558,6 +557,9 @@ dtls_ecdsa_verify_sig(const unsigned char *pub_key_x,
 }
 #endif /* DTLS_ECC */
 
+#ifdef USE_PSA
+#include "platform-specific/dtls_aes_ccm_psa.c"
+#else
 int
 dtls_encrypt_params(const dtls_ccm_params_t *params,
                     const unsigned char *src, size_t length,
@@ -583,20 +585,6 @@ dtls_encrypt_params(const dtls_ccm_params_t *params,
 error:
   dtls_cipher_context_release();
   return ret;
-}
-
-int 
-dtls_encrypt(const unsigned char *src, size_t length,
-	     unsigned char *buf,
-	     const unsigned char *nonce,
-	     const unsigned char *key, size_t keylen,
-	     const unsigned char *aad, size_t la)
-{
-  /* For backwards-compatibility, dtls_encrypt_params is called with
-   * M=8 and L=3. */
-  const dtls_ccm_params_t params = { nonce, 8, 3 };
-
-  return dtls_encrypt_params(&params, src, length, buf, key, keylen, aad, la);
 }
 
 int
@@ -625,6 +613,21 @@ dtls_decrypt_params(const dtls_ccm_params_t *params,
 error:
   dtls_cipher_context_release();
   return ret;
+}
+#endif /* USE_PSA */
+
+int 
+dtls_encrypt(const unsigned char *src, size_t length,
+	     unsigned char *buf,
+	     const unsigned char *nonce,
+	     const unsigned char *key, size_t keylen,
+	     const unsigned char *aad, size_t la)
+{
+  /* For backwards-compatibility, dtls_encrypt_params is called with
+   * M=8 and L=3. */
+  const dtls_ccm_params_t params = { nonce, 8, 3 };
+
+  return dtls_encrypt_params(&params, src, length, buf, key, keylen, aad, la);
 }
 
 int
